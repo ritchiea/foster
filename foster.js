@@ -95,7 +95,13 @@ Annotateable = function(options) {
     // http://www.openannotation.org/spec/core/publishing.html
     //
     var dropped = JSON.parse(event.srcElement.dataset.annotationData)
-    dropped.hasTarget = this.writer.targetDocument
+    var elem = event.toElement
+    dropped.hasTarget = {
+      "@id": "", // generate uuid here
+      "@type": "oa:SpecificResource", 
+      conformsTo: "http://tools.ietf.org/rfc/rfc3236",
+      value: elem.id
+    }
 
     writer.createAnnotation(dropped)
   })
