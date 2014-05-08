@@ -17,22 +17,36 @@
   this.targetDocument = options.target || window.location.href
   this.targetType = options.targetType || TYPES.dataset
   this.annotations = options.source || []
+  // annotator should be in format { email: 'foo@example.com', name: 'Foo Annotator' }
+  // any custom fields would require a URI to an RDF vocabulary
+  this.annotatedBy = options.annotator
 }
 
 Annotator.prototype.createAnnotation = function (body, callback) {
     
-  // this needs to handle lots more fields
   var newAnnotation = {
-    target: {targetDocument,
-    targetType: targetType,
-    body: body
-    // body: body.body,
-    // bodyType: body.type
+    target: {
+      uri: targetDocument,
+      type: targetType
+    }
+    body: {
+      // expected URI or plain text
+      // if plain text, uuid is necessary
+      bodyData: body,
+      annotatedAt: new Date,
+      annotatedBy: this.annotatedBy,
+      serializedBy: 'https://github.com/ritchiea/foster',
+      serializedAt: new Date
+    }
   }
 
   this.annotations.push(newAnnotation)
 
   return newAnnotation
+}
+
+Reader = function(options) {
+
 }
 
 Annotateable = function(options) {
@@ -50,12 +64,12 @@ Annotateable = function(options) {
 
   targetEl.addEventListener('dragend', function (event){
   
-    event.stopPropagation()
     event.preventDefault()
+    event.stopPropagation()
 
     var dropped = event.srcElement
     // data could come from the source or a HTML data attribute
-    writer.createAnnotation(dropped, 'predicate') 
+    writer.createAnnotation(dropped)
       
   })
 }
@@ -66,4 +80,4 @@ Annotateable.prototype.getAnnotations = function() {
 
 window.Foster = Annotateable
 
-)();
+  )();
