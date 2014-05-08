@@ -1,8 +1,7 @@
 (function Annotation(properties){
   this['@context'] = "http://www.w3.org/ns/oa-context-20130208.json"
-  // ids should be uuid or have a generator
-  // this['@id'] = "http://www.example.org/annotations/anno1"
   this['@type'] = "oa:Annotation"
+  // @id optional
 
   for (var prop in properties) {
     this[prop] = properties[prop]  
@@ -12,7 +11,7 @@
 Annotation.prototype.toRdf = function() {
   // should print in format:
   // 
-  // <x:MyAnno> a oa:Annotation ;
+  // <MyAnnoId> a oa:Annotation ;
   // oa:hasBody <urn:uuid:6C97B503-25EE-4E37-875C-B7C850E13194> ;
   // oa:hasTarget <http://en.wikipedia.org/> .
 
@@ -52,7 +51,6 @@ function Annotator(options){
 
 Annotator.prototype.createAnnotation = function (properties, callback) {
 
-  properties.hasTarget = this.targetDocument
   var newAnnotation = new Annotation(properties)
 
   this.annotations.push(newAnnotation)
@@ -97,6 +95,7 @@ Annotateable = function(options) {
     // http://www.openannotation.org/spec/core/publishing.html
     //
     var dropped = JSON.parse(event.srcElement.dataset.annotationData)
+    dropped.hasTarget = this.writer.targetDocument
 
     writer.createAnnotation(dropped)
   })
