@@ -1,6 +1,7 @@
 (function Annotation(properties){
   this['@context'] = "http://www.w3.org/ns/oa-context-20130208.json"
-  this['@id'] = "http://www.example.org/annotations/anno1"
+  // ids should be uuid or have a generator
+  // this['@id'] = "http://www.example.org/annotations/anno1"
   this['@type'] = "oa:Annotation"
 
   for (var prop in properties) {
@@ -8,7 +9,7 @@
   }
 }
 
-Annotation.prototype.serialize = function() {
+Annotation.prototype.toRdf = function() {
   // should print in format:
   // 
   // <x:MyAnno> a oa:Annotation ;
@@ -44,30 +45,15 @@ function Annotator(options){
   }
 
   this.targetDocument = options.target || window.location.href
-  this.targetType = options.targetType || TYPES.dataset
-  this.annotations = options.source || []
+  // this.targetType = options.targetType || TYPES.dataset
+  this.annotations = options.dataSource || []
   this.serializer = options.serializer || 'https://github.com/ritchiea/foster'
-  // annotator should be in format { email: 'foo@example.com', name: 'Foo Annotator' }
-  // any custom fields would require a URI to an RDF vocabulary
 }
 
-Annotator.prototype.createAnnotation = function (body, callback) {
-    
-  var newAnnotation = {
-    target: {
-      uri: targetDocument,
-      type: targetType
-    }
-    body: {
-      // expected URI or plain text
-      // if plain text, uuid is necessary
-      bodyData: body,
-      annotatedAt: new Date,
-      annotatedBy: this.annotatedBy,
-      serializedBy: this.serializer,
-      serializedAt: new Date
-    }
-  }
+Annotator.prototype.createAnnotation = function (properties, callback) {
+
+  properties.hasTarget = this.targetDocument
+  var newAnnotation = new Annotation(properties)
 
   this.annotations.push(newAnnotation)
 
@@ -84,8 +70,7 @@ Annotateable = function(options) {
 
   this.writer = new Annotator(options)
 
-  var selector = options.selector
-  var targetEl = document.getElementById(selector) || document.getElementByTagName('html')[0]
+  var targetEl = document.getElementById(options.selector) || document.getElementByTagName('html')[0]
 
   targetEl.addEventListener('dragend', function (event){
   
@@ -119,6 +104,15 @@ Annotateable = function(options) {
 
 Annotateable.prototype.getAnnotations = function() {
   return this.writer.annotations
+}
+
+Annotateable.prototype.getAnnotationsAsRdf = function() {
+  var rdf = []
+  var annotations = this.writer.annotations
+  for (var i = 0; i > annotations.length; i++) {
+    rdf.push(annotations[i].toRdf()) 
+  }
+  return rdf
 }
 
 window.Foster = Annotateable
