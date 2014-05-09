@@ -53,9 +53,7 @@
   Annotator.prototype.createAnnotation = function (properties, callback) {
 
     var newAnnotation = new Annotation(properties)
-
     this.annotations.push(newAnnotation)
-
     return newAnnotation
   }
 
@@ -77,7 +75,8 @@
 
     this.writer = new Annotator(options)
 
-    var annotatationElements = document.getElementsByClassName('annotation-element')
+    var annotationClassName = options.annotationClass || 'annotation-element'
+    var annotatationElements = document.getElementsByClassName(annotationClassName)
     for (var i = 0; i < annotationElements.length; i++) {
       annotationElements[i].addEventListener('click', function(event) {
 
@@ -88,12 +87,12 @@
     var targetEl = document.getElementById(options.selector) || document.getElementByTagName('html')[0]
 
     targetEl.addEventListener('dragend', function (event){
-    
+
       event.preventDefault()
       event.stopPropagation()
 
       // the dropped element requires a data attribute with annotation data
-      // e.g. <id='stats' data-annotation-data='{hasBody: "...", annotatedBy: "..."}'>
+      // e.g. <id='stats' data-annotation='{hasBody: "...", annotatedBy: "..."}'>
       //
       // format:
       /* 
@@ -105,13 +104,13 @@
           }, 
           "name": "Person One"
         },
-       
+
         "hasBody": "http://www.example.org/body1"    
       */
       // examples available:
       // http://www.openannotation.org/spec/core/publishing.html
       //
-      var dropped = JSON.parse(event.srcElement.dataset.annotationData)
+      var dropped = JSON.parse(event.srcElement.dataset.annotation),
       var elem = event.toElement
       dropped.hasTarget = {
         "@id": "", // generate uuid here
@@ -127,13 +126,16 @@
       if (typeof window.getSelection !== 'undefined') {
         var selection = window.getSelection
         document.addEventListener('foster.clickAnnotateable', function (evt){
-          var annotationData = JSON.parse(evt.srcElement.dataset.annotationData)    
+          var exact = selection.toString(),
+            prefix = selection.anchorNode.data.substring(0,selection.anchorOffset),
+            suffix = selection.focusNode.data.substring(selection.focusOffset,0),
+            annotationData = JSON.parse(evt.srcElement.dataset.annotation)
           annotationData.hasTarget = {
             "@type": "oa:SpecificResource", 
             selector: 'oa:TextQuoteSelector',
-            exact:
-            prefix:
-            suffix:
+            exact: exact,
+            prefix: prefix,
+            suffix: suffix
           }
 
           writer.createAnnotation(annotationData)
@@ -158,157 +160,3 @@
   window.Foster = Annotateable
 
 )();
-
-
-/* example of event.srcElement 
- *
-  srcElement: img
-  accessKey: ""
-  align: ""
-  alt: ""
-  attributes: NamedNodeMap
-  baseURI: "http://www.openannotation.org/spec/core/specific.html"
-  border: ""
-  childElementCount: 0
-  childNodes: NodeList[0]
-  children: HTMLCollection[0]
-  classList: DOMTokenList
-  className: ""
-  clientHeight: 509
-  clientLeft: 0
-  clientTop: 0
-  clientWidth: 600
-  complete: true
-  contentEditable: "inherit"
-  crossOrigin: ""
-  dataset: DOMStringMap
-  dir: ""
-  draggable: true
-  firstChild: null
-  firstElementChild: null
-  height: 509
-  hidden: false
-  hspace: 0
-  id: ""
-  innerHTML: ""
-  innerText: ""
-  isContentEditable: false
-  isMap: false
-  lang: ""
-  lastChild: null
-  lastElementChild: null
-  localName: "img"
-  longDesc: ""
-  lowsrc: ""
-  name: ""
-  namespaceURI: "http://www.w3.org/1999/xhtml"
-  naturalHeight: 836
-  naturalWidth: 986
-  nextElementSibling: br
-  nextSibling: text
-  nodeName: "IMG"
-  nodeType: 1
-  nodeValue: null
-  offsetHeight: 509
-  offsetLeft: 215
-  offsetParent: body
-  offsetTop: 4748
-  offsetWidth: 600
-  onabort: null
-  onbeforecopy: null
-  onbeforecut: null
-  onbeforepaste: null
-  onblur: null
-  oncancel: null
-  oncanplay: null
-  oncanplaythrough: null
-  onchange: null
-  onclick: null
-  onclose: null
-  oncontextmenu: null
-  oncopy: null
-  oncuechange: null
-  oncut: null
-  ondblclick: null
-  ondrag: null
-  ondragend: null
-  ondragenter: null
-  ondragleave: null
-  ondragover: null
-  ondragstart: null
-  ondrop: null
-  ondurationchange: null
-  onemptied: null
-  onended: null
-  onerror: null
-  onfocus: null
-  oninput: null
-  oninvalid: null
-  onkeydown: null
-  onkeypress: null
-  onkeyup: null
-  onload: null
-  onloadeddata: null
-  onloadedmetadata: null
-  onloadstart: null
-  onmousedown: null
-  onmouseenter: null
-  onmouseleave: null
-  onmousemove: null
-  onmouseout: null
-  onmouseover: null
-  onmouseup: null
-  onmousewheel: null
-  onpaste: null
-  onpause: null
-  onplay: null
-  onplaying: null
-  onprogress: null
-  onratechange: null
-  onreset: null
-  onresize: null
-  onscroll: null
-  onsearch: null
-  onseeked: null
-  onseeking: null
-  onselect: null
-  onselectstart: null
-  onshow: null
-  onstalled: null
-  onsubmit: null
-  onsuspend: null
-  ontimeupdate: null
-  onvolumechange: null
-  onwaiting: null
-  onwebkitfullscreenchange: null
-  onwebkitfullscreenerror: null
-  onwheel: null
-  outerHTML: "<img src="images/fragmentselector.png" width="600px">"
-  outerText: ""
-  ownerDocument: document
-  parentElement: div.diagram
-  parentNode: div.diagram
-  prefix: null
-  previousElementSibling: null
-  previousSibling: text
-  scrollHeight: 509
-  scrollLeft: 0
-  scrollTop: 0
-  scrollWidth: 600
-  spellcheck: true
-  src: "http://www.openannotation.org/spec/core/images/fragmentselector.png"
-  srcset: ""
-  style: CSSStyleDeclaration
-  tabIndex: -1
-  tagName: "IMG"
-  textContent: ""
-  title: ""
-  translate: true
-  useMap: ""
-  vspace: 0
-  webkitShadowRoot: null
-  webkitdropzone: ""
-  width: 600
-  x: 215
-  y: 4748
-*/
