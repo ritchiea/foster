@@ -123,9 +123,11 @@
     })
 
     targetEl.addEventListener('mouseup', function (event){ 
+
       if (typeof window.getSelection !== 'undefined') {
-        var selection = window.getSelection
-        document.addEventListener('foster.clickAnnotateable', function (evt){
+
+        var listener = function (evt){
+          var selection = window.getSelection
           var exact = selection.toString(),
             prefix = selection.anchorNode.data.substring(0,selection.anchorOffset),
             suffix = selection.focusNode.data.substring(selection.focusOffset,0),
@@ -139,6 +141,12 @@
           }
 
           writer.createAnnotation(annotationData)
+        }
+
+        document.addEventListener('foster.clickAnnotateable', listener, false)
+
+        document.addEventListener('mousedown', function(e) {
+          document.removeEventListener('foster.clickAnnotateable', listener, false)
         })
       }
     })
