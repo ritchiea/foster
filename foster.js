@@ -2,6 +2,7 @@
   function Annotation(properties){
     this['@context'] = "http://www.w3.org/ns/oa-context-20130208.json"
     this['@type'] = "oa:Annotation"
+    this['annotatedAt'] = new Date
     // @id optional
 
     for (var prop in properties) {
@@ -67,22 +68,24 @@
 
     // create custom event
     if (window.CustomEvent) {
-      var annotationClickEvent = new CustomEvent('foster.clickAnnotateable', {detail: {createAnnotationFromSource: 'true'}});
+      var annotationClickEvent = new CustomEvent('foster.clickAnnotateable', {detail: {createAnnotationFromSource: 'true'}})
     } else {
-      var annotationClickEvent = document.createEvent('CustomEvent');
-      annotationClickEvent.initCustomEvent('foster.clickAnnotateable', true, true, {createAnnotationFromSource: 'true'});
+      var annotationClickEvent = document.createEvent('CustomEvent')
+      annotationClickEvent.initCustomEvent('foster.clickAnnotateable', true, true, {createAnnotationFromSource: 'true'})
     }
-
-    this.writer = new Annotator(options)
 
     var annotationClassName = options.annotationClass || 'annotation-element'
     var annotatationElements = document.getElementsByClassName(annotationClassName)
-    for (var i = 0; i < annotationElements.length; i++) {
-      annotationElements[i].addEventListener('click', function(event) {
+    if (annotationElements.length) {
+      for (var i = 0; i < annotationElements.length; i++) {
+        annotationElements[i].addEventListener('click', function(event) {
 
-        event.target.dispatchEvent(annotationClickEvent);
-      })
+          event.target.dispatchEvent(annotationClickEvent)
+        })
+      }
     }
+
+    this.writer = new Annotator(options)
 
     var targetEl = document.getElementById(options.selector) || document.getElementByTagName('html')[0]
 
@@ -113,10 +116,13 @@
       var dropped = JSON.parse(event.srcElement.dataset.annotation),
       var elem = event.toElement
       dropped.hasTarget = {
-        "@id": "", // generate uuid here
-        "@type": "oa:SpecificResource", 
-        conformsTo: "http://tools.ietf.org/rfc/rfc3236",
-        value: elem.id
+        '@type': 'oa:SpecificResource', 
+        hasSelector: {
+          // '@id': uuid
+          '@type': 'oa:FragmentSelector',
+          conformsTo: 'http://tools.ietf.org/rfc/rfc3236',
+          value: elem.id
+        }
       }
 
       writer.createAnnotation(dropped)
@@ -133,11 +139,14 @@
             suffix = selection.focusNode.data.substring(selection.focusOffset,0),
             annotationData = JSON.parse(evt.srcElement.dataset.annotation)
           annotationData.hasTarget = {
-            "@type": "oa:SpecificResource", 
-            selector: 'oa:TextQuoteSelector',
-            exact: exact,
-            prefix: prefix,
-            suffix: suffix
+            '@type': 'oa:SpecificResource', 
+            hasSelector: { 
+              // '@id': uuid
+              '@type': 'oa:TextQuoteSelector',
+              exact: exact,
+              prefix: prefix,
+              suffix: suffix 
+            }
           }
 
           writer.createAnnotation(annotationData)
@@ -153,16 +162,22 @@
   }
 
   Annotateable.prototype.getAnnotations = function() {
-    return this.writer.annotations
+    if (this.writer.annotations.length) { return this.writer.annotations }
   }
 
   Annotateable.prototype.getAnnotationsAsRdf = function() {
-    var rdf = []
-    var annotations = this.writer.annotations
-    for (var i = 0; i < annotations.length; i++) {
-      rdf.push(annotations[i].toRdf()) 
+
+    if (!this.writer.annotations.length) { 
+      return false 
+    } else {
+
+      var rdf = []
+      var annotations = this.writer.annotations
+      for (var i = 0; i < annotations.length; i++) {
+        rdf.push(annotations[i].toRdf()) 
+      }
+      return rdf
     }
-    return rdf
   }
 
   window.Foster = Annotateable
