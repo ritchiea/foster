@@ -1,15 +1,17 @@
-(
-  function Annotation(properties){
+(function(){
+
+  function Annotation (properties){
     this['@context'] = "http://www.w3.org/ns/oa-context-20130208.json"
     this['@type'] = "oa:Annotation"
     this['annotatedAt'] = new Date
     // @id optional
 
     for (var prop in properties) {
-      this[prop] = properties[prop]  
+      this[prop] = properties[prop]
     }
   }
 
+  /*
   Annotation.prototype.toRdf = function() {
     // should print in format:
     // 
@@ -28,8 +30,9 @@
     // example from: http://www.w3.org/community/openannotation/wiki/Cookbook
 
   }
+ */
 
-  function Annotator(options){
+  function Annotator (options){
     // annotations have a target & a body
     // preferably these will be URIs but a body can be plain text with guid
     // if loaded into a web page, target is current url
@@ -55,30 +58,37 @@
 
     var newAnnotation = new Annotation(properties)
     this.annotations.push(newAnnotation)
+    console.log(newAnnotation)
     return newAnnotation
   }
 
-  Reader = function(options) {
+  Reader = function (options) {
 
   }
 
-  Annotateable = function(options) {
+  DEFAULTS = {
+    selector: ''
+  }
 
-    if (typeof options === 'undefined') { var options = {} }
+  Annotateable = function (options) {
+    window._fosterData = {}
+
+    if (typeof options === 'undefined') { var options = DEFAULTS }
+    this.options = options
 
     // create custom event
     if (window.CustomEvent) {
-      var annotationClickEvent = new CustomEvent('foster.clickAnnotateable', {detail: {createAnnotationFromSource: 'true'}})
+      var annotationClickEvent = new CustomEvent('foster.clickAnnotateable', {bubbles: true, detail: {createAnnotationFromSource: 'true'}})
     } else {
       var annotationClickEvent = document.createEvent('CustomEvent')
       annotationClickEvent.initCustomEvent('foster.clickAnnotateable', true, true, {createAnnotationFromSource: 'true'})
     }
 
     var annotationClassName = options.annotationClass || 'annotation-element'
-    var annotatationElements = document.getElementsByClassName(annotationClassName)
+    var annotationElements = document.getElementsByClassName(annotationClassName)
     if (annotationElements.length) {
       for (var i = 0; i < annotationElements.length; i++) {
-        annotationElements[i].addEventListener('click', function(event) {
+        annotationElements[i].addEventListener('click', function (event) {
 
           event.target.dispatchEvent(annotationClickEvent)
         })
@@ -86,10 +96,11 @@
     }
 
     this.writer = new Annotator(options)
+    _fosterData.writer = this.writer
 
     var targetEl = document.getElementById(options.selector) || document.getElementByTagName('html')[0]
 
-    targetEl.addEventListener('dragend', function (event){
+    targetEl.addEventListener('drop', function (event){
 
       event.preventDefault()
       event.stopPropagation()
@@ -113,7 +124,7 @@
       // examples available:
       // http://www.openannotation.org/spec/core/publishing.html
       //
-      var dropped = JSON.parse(event.srcElement.dataset.annotation),
+      var dropped = JSON.parse(event.target.dataset.annotation)
       var elem = event.toElement
       dropped.hasTarget = {
         '@type': 'oa:SpecificResource', 
@@ -125,7 +136,7 @@
         }
       }
 
-      writer.createAnnotation(dropped)
+      _fosterData.writer.createAnnotation(dropped)
     })
 
     targetEl.addEventListener('mouseup', function (event){ 
@@ -133,11 +144,11 @@
       if (typeof window.getSelection !== 'undefined') {
 
         var listener = function (evt){
-          var selection = window.getSelection
+          var selection = window.getSelection()
           var exact = selection.toString(),
             prefix = selection.anchorNode.data.substring(0,selection.anchorOffset),
             suffix = selection.focusNode.data.substring(selection.focusOffset,0),
-            annotationData = JSON.parse(evt.srcElement.dataset.annotation)
+            annotationData = JSON.parse(evt.target.dataset.annotation)
           annotationData.hasTarget = {
             '@type': 'oa:SpecificResource', 
             hasSelector: { 
@@ -149,13 +160,19 @@
             }
           }
 
-          writer.createAnnotation(annotationData)
+          _fosterData.writer.createAnnotation(annotationData)
         }
 
         document.addEventListener('foster.clickAnnotateable', listener, false)
 
-        document.addEventListener('mousedown', function(e) {
-          document.removeEventListener('foster.clickAnnotateable', listener, false)
+        document.addEventListener('mousedown', function (e) {
+          if (!e.target.classList.contains(annotationClassName)) {  
+            document.removeEventListener('foster.clickAnnotateable', listener, false)
+          } else {
+            e.preventDefault()
+            e.stopPropagation()
+            return false
+          }
         })
       }
     })
@@ -180,6 +197,9 @@
     }
   }
 
+  // USE
+  // annotator = new Foster({selector: 'doc-to-annotate'})
+  // <div id='doc-to-annotate'> ... </div>
   window.Foster = Annotateable
 
-)();
+}).call(this);
