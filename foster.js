@@ -50,7 +50,11 @@
 
     this.targetDocument = options.target || window.location.href
     // this.targetType = options.targetType || TYPES.dataset
-    this.annotations = options.dataSource || []
+    if (typeof options.dataSource === 'undefined') {
+      this.annotations = []
+    } else {
+      this.annotations = this.read(options.dataSource)
+    }
     this.serializer = options.serializer || 'https://github.com/ritchiea/foster'
   }
 
@@ -62,13 +66,14 @@
     return newAnnotation
   }
 
-  Reader = function (options) {
-
+  Annotator.prototype.read = function (data) {
+    return JSON.parse(data)
   }
 
   function setDragEndListener(element) {
     element.addEventListener('dragend', function (event){
 
+      window.eV = event
       event.preventDefault()
       event.stopPropagation()
 
@@ -99,11 +104,13 @@
           // '@id': uuid
           '@type': 'oa:FragmentSelector',
           conformsTo: 'http://tools.ietf.org/rfc/rfc3236',
-          value: elem.id
+          // this is going to be tricky
+          // probably needs an API & events to assure drop gets a valid value
+          value: document.elementFromPoint(event.clientX, event.clientY).getAttribute('id')
         }
       }
 
-      _fosterData.writer.createAnnotation(dropped)
+      _fosterData._writer.createAnnotation(dropped)
     })
 
   }
@@ -140,10 +147,9 @@
       }
     }
 
-    _fosterData.writer = this.writer = new Annotator(options)
+    _fosterData._writer = this._writer = new Annotator(options)
 
     var targetEl = document.getElementById(options.selector) || document.getElementByTagName('html')[0]
-
     
     targetEl.addEventListener('mouseup', function (event){ 
 
@@ -166,7 +172,7 @@
             }
           }
 
-          _fosterData.writer.createAnnotation(annotationData)
+          _fosterData._writer.createAnnotation(annotationData)
         }
 
         document.addEventListener('foster.clickAnnotateable', listener, false)
@@ -190,21 +196,21 @@
   }
 
   Annotateable.prototype.getAnnotations = function() {
-    if (this.writer.annotations.length) { return this.writer.annotations }
+    if (this._writer.annotations.length) { return this._writer.annotations }
   }
 
   Annotateable.prototype.getAnnotationsAsJson = function() {
-    if (this.writer.annotations.length) { return JSON.stringify(this.writer.annotations) }
+    if (this._writer.annotations.length) { return JSON.stringify(this._writer.annotations) }
   }
 
   Annotateable.prototype.getAnnotationsAsRdf = function() {
 
-    if (!this.writer.annotations.length) { 
+    if (!this._writer.annotations.length) { 
       return false 
     } else {
 
       var rdf = []
-      var annotations = this.writer.annotations
+      var annotations = this._writer.annotations
       for (var i = 0; i < annotations.length; i++) {
         rdf.push(annotations[i].toRdf()) 
       }
