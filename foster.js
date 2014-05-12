@@ -184,6 +184,11 @@
     })
   }
 
+  Annotateable.prototype.watch = function(element) {
+    setDragEndListener(element)
+    return true
+  }
+
   Annotateable.prototype.getAnnotations = function() {
     if (this.writer.annotations.length) { return this.writer.annotations }
   }
