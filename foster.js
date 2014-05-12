@@ -9,14 +9,9 @@
     for (var prop in properties) {
       this[prop] = properties[prop]
     }
-  }
 
-  Annotation.prototype.target = function() {
-    return this.hasTarget
-  }
-
-  Annotation.prototype.body = function() {
-    return this.hasBody
+    this.target = this.hasTarget
+    this.body = this.hasBody
   }
 
   /*
@@ -75,8 +70,39 @@
   }
 
   Annotator.prototype.read = function (data) {
-    return JSON.parse(data)
+    var list = JSON.parse(data)
+    if (Array.isArray(list)) {
+      var annotations = []
+      for (var i = 0; i < list.length; i++) {
+        annotations.push(new Annotation(list[i])) 
+      }
+      return annotations
+    } else {
+      return []
+    }
   }
+
+  Annotator.prototype.getSelection = function(annotation, callback) {
+    if (typeof annotation.target === 'object') {
+      if (annotation.target.hasSelector['@type'] === 'oa:TextQuoteSelector'){  
+        var pre_search = document.evaluate('//*[text()[contains(.,"' + annotation.target.hasSelector.prefix + '")]]',document, null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null)
+        var startElem = pre_search.iterateNext()
+        var suf_search = document.evaluate('//*[text()[contains(.,"' + annotation.target.hasSelector.suffix + '")]]',document, null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null)
+        var endElem = suf_search.iterateNext()
+        var range = document.creatRange()
+        range.setStart(startElem,annotation.target.hasSelector.prefix.length)
+        range.setEnd(endElem,endElem.search(annotation.target.hasSelector.suffix)-1)
+
+        callback(range)
+
+      } else if (annotation.target.hasSelector['@type'] === 'oa:FragmentSelector'){  
+
+        // for now this just supports HTML
+        elem = document.getElementById(annotation.target.hasSelector.value)
+        callback(elem)
+      }
+    }
+  } 
 
   function setDragEndListener(element) {
     element.addEventListener('dragend', function (event){
@@ -166,7 +192,7 @@
           var selection = window.getSelection()
           var exact = selection.toString(),
             prefix = selection.anchorNode.data.substring(0,selection.anchorOffset),
-            suffix = selection.focusNode.data.substring(selection.focusOffset,0),
+            suffix = selection.focusNode.data.substring(selection.focusOffset,selection.focusNode.data.length-1),
             annotationData = JSON.parse(evt.target.dataset.annotation)
           annotationData.hasTarget = {
             '@type': 'oa:SpecificResource', 
