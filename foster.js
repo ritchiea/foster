@@ -66,41 +66,8 @@
 
   }
 
-  DEFAULTS = {
-    selector: ''
-  }
-
-  Annotateable = function (options) {
-    window._fosterData = {}
-
-    if (typeof options === 'undefined') { var options = DEFAULTS }
-    this.options = options
-
-    // create custom event
-    if (window.CustomEvent) {
-      var annotationClickEvent = new CustomEvent('foster.clickAnnotateable', {bubbles: true, detail: {createAnnotationFromSource: 'true'}})
-    } else {
-      var annotationClickEvent = document.createEvent('CustomEvent')
-      annotationClickEvent.initCustomEvent('foster.clickAnnotateable', true, true, {createAnnotationFromSource: 'true'})
-    }
-
-    var annotationClassName = options.annotationClass || 'annotation-element'
-    var annotationElements = document.getElementsByClassName(annotationClassName)
-    if (annotationElements.length) {
-      for (var i = 0; i < annotationElements.length; i++) {
-        annotationElements[i].addEventListener('click', function (event) {
-
-          event.target.dispatchEvent(annotationClickEvent)
-        })
-      }
-    }
-
-    this.writer = new Annotator(options)
-    _fosterData.writer = this.writer
-
-    var targetEl = document.getElementById(options.selector) || document.getElementByTagName('html')[0]
-
-    targetEl.addEventListener('drop', function (event){
+  function setDragEndListener(element) {
+    element.addEventListener('dragend', function (event){
 
       event.preventDefault()
       event.stopPropagation()
@@ -139,6 +106,45 @@
       _fosterData.writer.createAnnotation(dropped)
     })
 
+  }
+
+  PLUGIN_DEFAULTS = {
+    selector: ''
+  }
+
+  Annotateable = function (options) {
+    window._fosterData = {}
+
+    if (typeof options === 'undefined') { var options = PLUGIN_DEFAULTS }
+    this.options = options
+
+    // create custom event
+    if (window.CustomEvent) {
+      var annotationClickEvent = new CustomEvent('foster.clickAnnotateable', {bubbles: true, detail: {createAnnotationFromSource: 'true'}})
+    } else {
+      var annotationClickEvent = document.createEvent('CustomEvent')
+      annotationClickEvent.initCustomEvent('foster.clickAnnotateable', true, true, {createAnnotationFromSource: 'true'})
+    }
+
+    var annotationClassName = options.annotationClass || 'annotation'
+    var annotationElements = document.getElementsByClassName(annotationClassName)
+    if (annotationElements.length) {
+      for (var i = 0; i < annotationElements.length; i++) {
+
+        setDragEndListener(annotationElements[i])
+
+        annotationElements[i].addEventListener('click', function (event) {
+
+          event.target.dispatchEvent(annotationClickEvent)
+        })
+      }
+    }
+
+    _fosterData.writer = this.writer = new Annotator(options)
+
+    var targetEl = document.getElementById(options.selector) || document.getElementByTagName('html')[0]
+
+    
     targetEl.addEventListener('mouseup', function (event){ 
 
       if (typeof window.getSelection !== 'undefined') {
@@ -182,6 +188,10 @@
     if (this.writer.annotations.length) { return this.writer.annotations }
   }
 
+  Annotateable.prototype.getAnnotationsAsJson = function() {
+    if (this.writer.annotations.length) { return JSON.stringify(this.writer.annotations) }
+  }
+
   Annotateable.prototype.getAnnotationsAsRdf = function() {
 
     if (!this.writer.annotations.length) { 
@@ -197,9 +207,11 @@
     }
   }
 
-  // USE
+  // USAGE
+  //
   // annotator = new Foster({selector: 'doc-to-annotate'})
-  // <div id='doc-to-annotate'> ... </div>
+  // <div id='doc-to-annotate'> ...annotateable stuff... </div>
+
   window.Foster = Annotateable
 
 }).call(this);
