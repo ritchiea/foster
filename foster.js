@@ -83,6 +83,7 @@
   }
 
   Annotator.prototype.getSelection = function(annotation, callback) {
+    console.log('foo')
     if (typeof annotation.target === 'object') {
       if (annotation.target.hasSelector['@type'] === 'oa:TextQuoteSelector'){  
         var pre_search = document.evaluate('//*[text()[contains(.,"' + annotation.target.hasSelector.prefix + '")]]',document, null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null)
@@ -91,7 +92,7 @@
         var endElem = suf_search.iterateNext()
         var range = document.creatRange()
         range.setStart(startElem,annotation.target.hasSelector.prefix.length)
-        range.setEnd(endElem,endElem.search(annotation.target.hasSelector.suffix)-1)
+        range.setEnd(endElem,endElem.textContent.search(annotation.target.hasSelector.suffix)-1)
 
         callback(range)
 
