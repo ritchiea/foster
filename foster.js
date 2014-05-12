@@ -11,6 +11,14 @@
     }
   }
 
+  Annotation.prototype.target = function() {
+    return this.hasTarget
+  }
+
+  Annotation.prototype.body = function() {
+    return this.hasBody
+  }
+
   /*
   Annotation.prototype.toRdf = function() {
     // should print in format:
@@ -73,7 +81,6 @@
   function setDragEndListener(element) {
     element.addEventListener('dragend', function (event){
 
-      window.eV = event
       event.preventDefault()
       event.stopPropagation()
 
@@ -199,7 +206,7 @@
     if (this._writer.annotations.length) { return this._writer.annotations }
   }
 
-  Annotateable.prototype.getAnnotationsAsJson = function() {
+  Annotateable.prototype.getAnnotationsAsString = function() {
     if (this._writer.annotations.length) { return JSON.stringify(this._writer.annotations) }
   }
 
