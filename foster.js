@@ -42,16 +42,6 @@
 
     if (typeof options === 'undefined') { options = {} }
 
-    var TYPES = {
-      dataset: 'dctypes:Dataset',
-      image: 'dctypes:Image',
-      movingImage: 'dctypes:MovingImage',
-      text: 'dctypes:Text',
-      sound: 'dctypes:Sound'
-    }
-
-    this.targetDocument = options.target || window.location.href
-    // this.targetType = options.targetType || TYPES.dataset
     if (typeof options.dataSource === 'undefined') {
       this.annotations = []
     } else {
@@ -133,6 +123,10 @@
           // this is going to be tricky
           // probably needs an API & events to assure drop gets a valid value
           value: document.elementFromPoint(event.clientX, event.clientY).getAttribute('id')
+        },
+        hasSource: {
+          '@id': this.options.targetDocument,
+          '@type': this.options.targetType
         }
       }
 
@@ -152,6 +146,17 @@
 
     if (typeof options === 'undefined') { var options = PLUGIN_DEFAULTS }
     this.options = options
+
+    var TYPES = {
+      dataset: 'dctypes:Dataset',
+      image: 'dctypes:Image',
+      movingImage: 'dctypes:MovingImage',
+      text: 'dctypes:Text',
+      sound: 'dctypes:Sound'
+    }
+
+    this.options.targetDocument = options.target || window.location.href
+    this.options.targetType = options.type || TYPES.dataset
 
     // create custom event
     if (window.CustomEvent) {
@@ -197,7 +202,12 @@
               exact: exact,
               prefix: prefix,
               suffix: suffix 
+            },
+            hasSource: {
+              '@id': this.options.targetDocument,
+              '@type': this.options.targetType
             }
+
           }
 
           emitAnnotationCreateEvent(evt.target, annotationData)
