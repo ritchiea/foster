@@ -56,7 +56,6 @@
     var newAnnotation = new Annotation(properties)
     if (typeof callback === 'function') { newAnnotation = callback(newAnnotation) }
     this.annotations.push(newAnnotation)
-    console.log(newAnnotation)
     return newAnnotation
   }
 
@@ -77,7 +76,7 @@
     }
   }
 
-  function emitAnnotationCreateEvent(element, data) {
+  function dispatchAnnotationCreateEvent(element, data) {
     if (window.CustomEvent) {
       var annotationCreated = new CustomEvent('foster.annotationCreate', {bubbles: true, detail: {annotationData: data}})
     } else {
@@ -138,7 +137,7 @@
           }
         }
 
-        emitAnnotationCreateEvent(elem, dropped)
+        dispatchAnnotationCreateEvent(elem, dropped)
 
         _fosterData._writer.createAnnotation(dropped, options.onCreate)
       })
@@ -184,7 +183,7 @@
     _fosterData._writer = this._writer = new Annotator(options)
 
     var targetEl = document.getElementById(options.selector) || document.getElementByTagName('html')[0]
-    
+
     targetEl.addEventListener('mouseup', function (event){ 
 
       if (typeof window.getSelection !== 'undefined') {
@@ -211,7 +210,7 @@
 
           }
 
-          emitAnnotationCreateEvent(evt.target, annotationData)
+          dispatchAnnotationCreateEvent(evt.target, annotationData)
 
           _fosterData._writer.createAnnotation(annotationData, options.onCreate)
         }
@@ -301,10 +300,16 @@
     }
   } 
 
+  Annotatable.prototype.create = function(properties, callback) {
+    dispatchAnnotationCreateEvent(document, properties)
+    this._writer.createAnnotation(properties, callback)
+  }
 
   // USAGE
   //
-  // annotator = new Foster({selector: 'doc-to-annotate'})
+  // annotator = new Foster({selector: 'id-of-doc-to-annotate', 
+  //                         onCreate: function(annotation) { console.log("Create callback"); return annotation; } 
+  //                         })
   // <div id='doc-to-annotate'> ...annotatable stuff... </div>
 
   window.Foster = Annotatable
