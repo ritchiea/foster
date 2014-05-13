@@ -82,29 +82,6 @@
     }
   }
 
-  Annotator.prototype.getSelection = function(annotation, callback) {
-    console.log('foo')
-    if (typeof annotation.target === 'object') {
-      if (annotation.target.hasSelector['@type'] === 'oa:TextQuoteSelector'){  
-        var pre_search = document.evaluate('//*[text()[contains(.,"' + annotation.target.hasSelector.prefix + '")]]',document, null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null)
-        var startElem = pre_search.iterateNext()
-        var suf_search = document.evaluate('//*[text()[contains(.,"' + annotation.target.hasSelector.suffix + '")]]',document, null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null)
-        var endElem = suf_search.iterateNext()
-        var range = document.creatRange()
-        range.setStart(startElem,annotation.target.hasSelector.prefix.length)
-        range.setEnd(endElem,endElem.textContent.search(annotation.target.hasSelector.suffix)-1)
-
-        callback(range)
-
-      } else if (annotation.target.hasSelector['@type'] === 'oa:FragmentSelector'){  
-
-        // for now this just supports HTML
-        elem = document.getElementById(annotation.target.hasSelector.value)
-        callback(elem)
-      }
-    }
-  } 
-
   function setDragEndListener(element) {
     element.addEventListener('dragend', function (event){
 
@@ -251,6 +228,37 @@
       return rdf
     }
   }
+
+  Annotateable.prototype.getSelection = function(annotation, callback) {
+    if (typeof annotation.target === 'object') {
+      if (annotation.target.hasSelector['@type'] === 'oa:TextQuoteSelector'){  
+        var pre_search = document.evaluate('//*[text()[contains(.,"' + annotation.target.hasSelector.prefix + '")]]',document, null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null)
+        var startElem = pre_search.iterateNext()
+        var suf_search = document.evaluate('//*[text()[contains(.,"' + annotation.target.hasSelector.suffix + '")]]',document, null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null)
+        var endElem = suf_search.iterateNext()
+        var range = document.createRange()
+        if (startElem == endElem) {
+
+          // this doesn't work the way the docs seem to describe...
+          // I thought I would be able to select specific characters
+          range.setStart(startElem,0)
+          range.setEnd(endElem,1)
+          // range.setStart(startElem,annotation.target.hasSelector.prefix.length)
+          // range.setEnd(endElem,endElem.textContent.search(annotation.target.hasSelector.suffix)-1)
+
+        }
+
+        callback(range)
+
+      } else if (annotation.target.hasSelector['@type'] === 'oa:FragmentSelector'){  
+
+        // for now this just supports HTML
+        elem = document.getElementById(annotation.target.hasSelector.value)
+        callback(elem)
+      }
+    }
+  } 
+
 
   // USAGE
   //
