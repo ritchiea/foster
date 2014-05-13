@@ -92,7 +92,7 @@
     selector: ''
   }
 
-  Annotateable = function (options) {
+  Annotatable = function (options) {
     window._fosterData = {}
 
     var setDragEndListener = function (element) {
@@ -161,10 +161,10 @@
 
     // create custom event
     if (window.CustomEvent) {
-      var annotationClickEvent = new CustomEvent('foster.clickAnnotateable', {bubbles: true, detail: {createAnnotationFromSource: 'true'}})
+      var annotationClickEvent = new CustomEvent('foster.clickAnnotatable', {bubbles: true, detail: {createAnnotationFromSource: 'true'}})
     } else {
       var annotationClickEvent = document.createEvent('CustomEvent')
-      annotationClickEvent.initCustomEvent('foster.clickAnnotateable', true, true, {createAnnotationFromSource: 'true'})
+      annotationClickEvent.initCustomEvent('foster.clickAnnotatable', true, true, {createAnnotationFromSource: 'true'})
     }
 
     var annotationClassName = options.annotationClass || 'annotation'
@@ -216,11 +216,11 @@
           _fosterData._writer.createAnnotation(annotationData, options.onCreate)
         }
 
-        document.addEventListener('foster.clickAnnotateable', listener, false)
+        document.addEventListener('foster.clickAnnotatable', listener, false)
 
         document.addEventListener('mousedown', function (e) {
           if (!e.target.classList.contains(annotationClassName)) {  
-            document.removeEventListener('foster.clickAnnotateable', listener, false)
+            document.removeEventListener('foster.clickAnnotatable', listener, false)
           } else {
             e.preventDefault()
             e.stopPropagation()
@@ -231,21 +231,21 @@
     })
   }
 
-  Annotateable.prototype.watch = function(element) {
+  Annotatable.prototype.watch = function(element) {
     // convenience function
     setDragEndListener(element)
     return true
   }
 
-  Annotateable.prototype.getAnnotations = function() {
+  Annotatable.prototype.getAnnotations = function() {
     if (this._writer.annotations.length) { return this._writer.annotations }
   }
 
-  Annotateable.prototype.getAnnotationsAsString = function() {
+  Annotatable.prototype.getAnnotationsAsString = function() {
     if (this._writer.annotations.length) { return JSON.stringify(this._writer.annotations) }
   }
 
-  Annotateable.prototype.getAnnotationsAsJson = function() {
+  Annotatable.prototype.getAnnotationsAsJson = function() {
     if (this._writer.annotations.length) { 
       
       var string = JSON.stringify(this._writer.annotations)
@@ -259,7 +259,7 @@
     }
   }
 
-  Annotateable.prototype.getAnnotationsAsRdf = function() {
+  Annotatable.prototype.getAnnotationsAsRdf = function() {
 
     if (!this._writer.annotations.length) { 
       return false 
@@ -274,7 +274,7 @@
     }
   }
 
-  Annotateable.prototype.getSelection = function(annotation, callback) {
+  Annotatable.prototype.getSelection = function(annotation, callback) {
     if (typeof annotation.target === 'object') {
       if (annotation.target.hasSelector['@type'] === 'oa:TextQuoteSelector'){  
         var pre_search = document.evaluate('//*[text()[contains(.,"' + annotation.target.hasSelector.prefix + '")]]',document, null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null)
@@ -305,8 +305,8 @@
   // USAGE
   //
   // annotator = new Foster({selector: 'doc-to-annotate'})
-  // <div id='doc-to-annotate'> ...annotateable stuff... </div>
+  // <div id='doc-to-annotate'> ...annotatable stuff... </div>
 
-  window.Foster = Annotateable
+  window.Foster = Annotatable
 
 }).call(this);
