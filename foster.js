@@ -3,8 +3,7 @@
   function Annotation (properties){
     this['@context'] = "http://www.w3.org/ns/oa-context-20130208.json"
     this['@type'] = "oa:Annotation"
-    this['annotatedAt'] = new Date
-    // @id optional
+    if (typeof properties.annotatedAt === 'undefined') { this['annotatedAt'] = new Date }
 
     for (var prop in properties) {
       this[prop] = properties[prop]
@@ -64,13 +63,18 @@
   Annotator.prototype.createAnnotation = function (properties, callback) {
 
     var newAnnotation = new Annotation(properties)
+    if (typeof callback === 'function') { newAnnotation = callback(newAnnotation) }
     this.annotations.push(newAnnotation)
     console.log(newAnnotation)
     return newAnnotation
   }
 
   Annotator.prototype.read = function (data) {
-    var list = JSON.parse(data)
+    if (typeof data === 'string') {
+      var list = JSON.parse(data)
+    } else {
+      var list = data
+    }
     if (Array.isArray(list)) {
       var annotations = []
       for (var i = 0; i < list.length; i++) {
@@ -80,6 +84,17 @@
     } else {
       return []
     }
+  }
+
+  function emitAnnotationCreateEvent(element, data) {
+    if (window.CustomEvent) {
+      var annotationCreated = new CustomEvent('foster.annotationCreate', {bubbles: true, detail: {annotationData: data}})
+    } else {
+      var annotationCreated = document.createEvent('CustomEvent')
+      annotationCreated.initCustomEvent('foster.annotationCreate', true, true, {annotationData: data})
+    }
+
+    element.dispatchEvent(annotationCreated)
   }
 
   function setDragEndListener(element) {
@@ -121,7 +136,9 @@
         }
       }
 
-      _fosterData._writer.createAnnotation(dropped)
+      emitAnnotationCreateEvent(elem, dropped)
+
+      _fosterData._writer.createAnnotation(dropped, this.options.onCreate)
     })
 
   }
@@ -183,7 +200,9 @@
             }
           }
 
-          _fosterData._writer.createAnnotation(annotationData)
+          emitAnnotationCreateEvent(evt.target, annotationData)
+
+          _fosterData._writer.createAnnotation(annotationData, options.onCreate)
         }
 
         document.addEventListener('foster.clickAnnotateable', listener, false)
@@ -202,7 +221,7 @@
   }
 
   Annotateable.prototype.watch = function(element) {
-    setDragEndListener(element)
+    setDragEndListener.call(this, element)
     return true
   }
 
