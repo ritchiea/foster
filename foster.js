@@ -87,62 +87,62 @@
     element.dispatchEvent(annotationCreated)
   }
 
-  function setDragEndListener(element) {
-    element.addEventListener('dragend', function (event){
-
-      event.preventDefault()
-      event.stopPropagation()
-
-      // the dropped element requires a data attribute with annotation data
-      // e.g. <id='stats' data-annotation='{hasBody: "...", annotatedBy: "..."}'>
-      //
-      // format:
-      /* 
-       "annotatedBy": {
-          "@id": "http://www.example.org/people/person1", 
-          "@type": "foaf:Person", 
-          "mbox": {
-              "@id": "mailto:person1@example.org"
-          }, 
-          "name": "Person One"
-        },
-
-        "hasBody": "http://www.example.org/body1"    
-      */
-      // examples available:
-      // http://www.openannotation.org/spec/core/publishing.html
-      //
-      var dropped = JSON.parse(event.target.dataset.annotation)
-      var elem = event.toElement
-      dropped.hasTarget = {
-        '@type': 'oa:SpecificResource', 
-        hasSelector: {
-          // '@id': uuid
-          '@type': 'oa:FragmentSelector',
-          conformsTo: 'http://tools.ietf.org/rfc/rfc3236',
-          // this is going to be tricky
-          // probably needs an API & events to assure drop gets a valid value
-          value: document.elementFromPoint(event.clientX, event.clientY).getAttribute('id')
-        },
-        hasSource: {
-          '@id': this.options.targetDocument,
-          '@type': this.options.targetType
-        }
-      }
-
-      emitAnnotationCreateEvent(elem, dropped)
-
-      _fosterData._writer.createAnnotation(dropped, this.options.onCreate)
-    })
-
-  }
-
   PLUGIN_DEFAULTS = {
     selector: ''
   }
 
   Annotateable = function (options) {
     window._fosterData = {}
+
+    var setDragEndListener = function (element) {
+      element.addEventListener('dragend', function (event){
+
+        event.preventDefault()
+        event.stopPropagation()
+
+        // the dropped element requires a data attribute with annotation data
+        // e.g. <id='stats' data-annotation='{hasBody: "...", annotatedBy: "..."}'>
+        //
+        // format:
+        /* 
+         "annotatedBy": {
+            "@id": "http://www.example.org/people/person1", 
+            "@type": "foaf:Person", 
+            "mbox": {
+                "@id": "mailto:person1@example.org"
+            }, 
+            "name": "Person One"
+          },
+
+          "hasBody": "http://www.example.org/body1"    
+        */
+        // examples available:
+        // http://www.openannotation.org/spec/core/publishing.html
+        //
+        var dropped = JSON.parse(event.target.dataset.annotation)
+        var elem = event.toElement
+        dropped.hasTarget = {
+          '@type': 'oa:SpecificResource', 
+          hasSelector: {
+            // '@id': uuid
+            '@type': 'oa:FragmentSelector',
+            conformsTo: 'http://tools.ietf.org/rfc/rfc3236',
+            // eventually this is going to be tricky
+            // probably needs an API & events to assure drop gets a valid value
+            value: document.elementFromPoint(event.clientX, event.clientY).getAttribute('id')
+          },
+          hasSource: {
+            '@id': options.targetDocument,
+            '@type': options.targetType
+          }
+        }
+
+        emitAnnotationCreateEvent(elem, dropped)
+
+        _fosterData._writer.createAnnotation(dropped, options.onCreate)
+      })
+
+    }
 
     if (typeof options === 'undefined') { var options = PLUGIN_DEFAULTS }
     this.options = options
@@ -155,8 +155,8 @@
       sound: 'dctypes:Sound'
     }
 
-    this.options.targetDocument = options.target || window.location.href
-    this.options.targetType = options.type || TYPES.dataset
+    options.targetDocument = options.target || window.location.href
+    options.targetType = options.type || TYPES.dataset
 
     // create custom event
     if (window.CustomEvent) {
@@ -204,8 +204,8 @@
               suffix: suffix 
             },
             hasSource: {
-              '@id': this.options.targetDocument,
-              '@type': this.options.targetType
+              '@id': options.targetDocument,
+              '@type': options.targetType
             }
 
           }
@@ -231,7 +231,8 @@
   }
 
   Annotateable.prototype.watch = function(element) {
-    setDragEndListener.call(this, element)
+    // convenience function
+    setDragEndListener(element)
     return true
   }
 
@@ -266,16 +267,13 @@
         var suf_search = document.evaluate('//*[text()[contains(.,"' + annotation.target.hasSelector.suffix + '")]]',document, null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null)
         var endElem = suf_search.iterateNext()
         var range = document.createRange()
-        if (startElem == endElem) {
 
-          // this doesn't work the way the docs seem to describe...
-          // I thought I would be able to select specific characters
-          range.setStart(startElem,0)
-          range.setEnd(endElem,1)
-          // range.setStart(startElem,annotation.target.hasSelector.prefix.length)
-          // range.setEnd(endElem,endElem.textContent.search(annotation.target.hasSelector.suffix)-1)
-
-        }
+        // this doesn't work the way the docs seem to describe...
+        // I thought I would be able to select specific characters
+        range.setStart(startElem,0)
+        range.setEnd(endElem,1)
+        // range.setStart(startElem,annotation.target.hasSelector.prefix.length)
+        // range.setEnd(endElem,endElem.textContent.search(annotation.target.hasSelector.suffix)-1)
 
         callback(range)
 
