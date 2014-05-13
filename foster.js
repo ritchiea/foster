@@ -9,6 +9,7 @@
       this[prop] = properties[prop]
     }
 
+    // for convenience
     this.target = this.hasTarget
     this.body = this.hasBody
   }
@@ -242,6 +243,20 @@
 
   Annotateable.prototype.getAnnotationsAsString = function() {
     if (this._writer.annotations.length) { return JSON.stringify(this._writer.annotations) }
+  }
+
+  Annotateable.prototype.getAnnotationsAsJson = function() {
+    if (this._writer.annotations.length) { 
+      
+      var string = JSON.stringify(this._writer.annotations)
+      var list = JSON.parse(string)
+      for (var i = 0; i < list.length; i++) {
+        // delete convenience properties
+        delete list[i].target
+        delete list[i].body
+      }
+      return JSON.stringify(list)
+    }
   }
 
   Annotateable.prototype.getAnnotationsAsRdf = function() {
